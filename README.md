@@ -47,4 +47,4 @@ The project uses the following key dependencies:
 
 ## Notes
 
-- This is a minimal functional example for the assignment. You can extend it with more features like animations, fetching questions from a network source, and more polished UI elements.
+- You can extend it with more features like animations, fetching questions from a network source, and more polished UI elements.
