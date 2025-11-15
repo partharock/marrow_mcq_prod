@@ -25,16 +25,34 @@ This is a minimal Jetpack Compose Android app that implements a quiz with multip
 The project follows a standard Android app structure:
 
 - `app/src/main/java/com/example/mcqquiz/`: This is the main package for the application.
-  - `MainActivity.kt`: The main entry point of the application. It sets up the Compose content.
-  - `QuizViewModel.kt`: The ViewModel that holds the application's state and business logic.
-  - `Question.kt`: The data class for the quiz questions.
-  - `ui/`: This package contains the Composables for the different screens of the app.
-    - `QuizScreen.kt`: The Composable for the main quiz screen.
-    - `ResultsScreen.kt`: The Composable for the results screen.
-    - `LoadingScreen.kt`: The Composable for the loading screen.
-    - `Components.kt`: Contains reusable UI components.
-    - `theme/`: The theme for the application.
+    - `di/`: This package contains the dependency injection container.
+        - `AppContainer.kt`: The manual dependency injection container.
+    - `ui/`: This package contains the Composables for the different screens of the app.
+        - `theme/`: The theme for the application.
+        - `Components.kt`: Contains reusable UI components.
+        - `QuizScreen.kt`: The Composable for the main quiz screen.
+        - `StartScreen.kt`: The Composable for the start screen.
+        - `LoadingPopup.kt`: The Composable for the loading popup.
+        - `LoadingScreen.kt`: The Composable for the loading screen.
+        - `ResultsScreen.kt`: The Composable for the results screen.
+        - `ClosingOverlay.kt`: The Composable for the closing overlay.
+    - `network/`: This package contains the network-related classes.
+    - `database/`: This package contains the database-related classes.
+    - `repository/`: This package contains the repository classes.
+    - `Question.kt`: The data class for the quiz questions.
+    - `MainActivity.kt`: The main entry point of the application. It sets up the Compose content.
+    - `SoundManager.kt`: Manages the sounds of the application.
+    - `QuizViewModel.kt`: The ViewModel that holds the application's state and business logic.
+    - `QuizApplication.kt`: The application class.
 - `app/src/main/assets/`: This directory contains the `questions.json` file.
+
+## Functionality
+
+The app consists of a single quiz with multiple-choice questions. The user can answer the questions and see the results at the end of the quiz. The app also has the following features:
+- A streak counter that tracks the number of consecutive correct answers.
+- A skip button to immediately go to the next question.
+- A results screen with the number of correct answers, total questions, skipped questions, the longest streak, and a "Restart" button.
+- Sound effects for correct and incorrect answers.
 
 ## Dependencies
 
@@ -44,6 +62,10 @@ The project uses the following key dependencies:
 - **ViewModel:** For managing the UI-related data in a lifecycle-conscious way.
 - **Navigation-Compose:** For navigating between the different screens of the app.
 - **Material Design:** For the UI components.
+- **Retrofit:** For networking.
+- **Room:** For database caching.
+- **JUnit, Mockito, and Mockito-Kotlin:** For unit testing.
+- **Espresso and Compose UI Test:** For UI testing.
 
 ## Notes
 
