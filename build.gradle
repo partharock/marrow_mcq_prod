@@ -1,21 +1,96 @@
-// Top-level build file
-buildscript {
-    ext {
-        kotlin_version = '1.9.22'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.devtools.ksp'
+}
+
+android {
+    namespace 'com.example.mcqquiz'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.example.mcqquiz"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
     }
-    repositories {
-        google()
-        mavenCentral()
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.13.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.9.22-1.0.17'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.8'
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
     }
 }
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
+
+dependencies {
+    implementation("com.google.android.material:material:1.13.0")
+    implementation "androidx.core:core-ktx:1.17.0"
+    implementation "androidx.activity:activity-compose:1.8.2"
+    implementation "androidx.compose.ui:ui:1.6.2"
+    implementation "androidx.compose.material:material:1.6.2"
+    implementation "androidx.compose.material:material-icons-extended:1.6.2"
+    implementation "androidx.compose.ui:ui-tooling-preview:1.6.2"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0"
+    implementation "androidx.navigation:navigation-compose:2.7.7"
+    implementation 'androidx.room:room-runtime:2.5.1'
+    implementation 'androidx.room:room-ktx:2.5.1'
+    implementation 'androidx.room:room-paging:2.5.1'
+    debugImplementation "androidx.compose.ui:ui-tooling:1.6.2"
+    implementation(platform("androidx.compose:compose-bom:2025.11.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2025.11.00"))
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    implementation("androidx.compose.material3:material3")
+
+    // Retrofit for networking
+    implementation "com.squareup.retrofit2:retrofit:2.9.0"
+    implementation "com.squareup.retrofit2:converter-gson:2.9.0"
+
+    // Room for database caching
+    implementation "androidx.room:room-runtime:2.6.1"
+    implementation "androidx.room:room-ktx:2.6.1"
+    ksp "androidx.room:room-compiler:2.6.1"
+
+    // Paging 3
+    implementation "androidx.paging:paging-compose:3.3.0"
+    implementation "androidx.paging:paging-runtime-ktx:3.3.0"
+
+    // Unit Testing
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.mockito:mockito-core:5.11.0"
+    testImplementation "org.mockito.kotlin:mockito-kotlin:5.2.1"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3"
+    testImplementation "androidx.arch.core:core-testing:2.2.0"
+
+    // Android (UI) Testing
+    androidTestImplementation "androidx.test.ext:junit:1.1.5"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.6.2"
+
 }

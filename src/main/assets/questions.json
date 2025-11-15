@@ -1,0 +1,112 @@
+[
+  {
+    "id": 1,
+    "question": "What is the capital of France?",
+    "options": [
+      "Berlin",
+      "Madrid",
+      "Paris",
+      "Rome"
+    ],
+    "answerIndex": 2
+  },
+  {
+    "id": 2,
+    "question": "Which planet is known as the Red Planet?",
+    "options": [
+      "Earth",
+      "Mars",
+      "Jupiter",
+      "Venus"
+    ],
+    "answerIndex": 1
+  },
+  {
+    "id": 3,
+    "question": "Who wrote 'Romeo and Juliet'?",
+    "options": [
+      "Charles Dickens",
+      "William Shakespeare",
+      "Mark Twain",
+      "Jane Austen"
+    ],
+    "answerIndex": 1
+  },
+  {
+    "id": 4,
+    "question": "Which gas do plants primarily use for photosynthesis?",
+    "options": [
+      "Oxygen",
+      "Nitrogen",
+      "Carbon Dioxide",
+      "Hydrogen"
+    ],
+    "answerIndex": 2
+  },
+  {
+    "id": 5,
+    "question": "What is 9 x 7?",
+    "options": [
+      "63",
+      "72",
+      "56",
+      "81"
+    ],
+    "answerIndex": 0
+  },
+  {
+    "id": 6,
+    "question": "Which language is primarily used for Android development?",
+    "options": [
+      "Kotlin",
+      "Swift",
+      "Ruby",
+      "Go"
+    ],
+    "answerIndex": 0
+  },
+  {
+    "id": 7,
+    "question": "What is H2O commonly known as?",
+    "options": [
+      "Salt",
+      "Water",
+      "Hydrogen Peroxide",
+      "Oxygen"
+    ],
+    "answerIndex": 1
+  },
+  {
+    "id": 8,
+    "question": "Which instrument has keys, pedals and strings?",
+    "options": [
+      "Piano",
+      "Violin",
+      "Flute",
+      "Drums"
+    ],
+    "answerIndex": 0
+  },
+  {
+    "id": 9,
+    "question": "Which continent is the Sahara Desert located in?",
+    "options": [
+      "Asia",
+      "South America",
+      "Africa",
+      "Australia"
+    ],
+    "answerIndex": 2
+  },
+  {
+    "id": 10,
+    "question": "Which element has the chemical symbol 'O'?",
+    "options": [
+      "Gold",
+      "Oxygen",
+      "Iron",
+      "Sodium"
+    ],
+    "answerIndex": 1
+  }
+]

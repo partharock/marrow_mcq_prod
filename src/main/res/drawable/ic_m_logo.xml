@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp"
+    android:height="108dp" android:viewportWidth="108"
+    android:viewportHeight="108"><!-- You can add a background color or shape here if you want -->
+    <!-- For example, a white background -->
+    <path android:fillColor="#FFFFFF" android:pathData="M0,0h108v108h-108z" />
+
+    <!-- Stylized 'M' shape -->
+    <!-- You can change the fillColor to match your app's branding. -->
+    <!-- A gradient similar to Marrow's could be a deep blue or teal. -->
+    <path android:fillColor="#00796B"
+        android:pathData="M24,78 L24,30 L42,30 L54,48 L66,30 L84,30 L84,78 L72,78 L72,45 L60,63 L48,45 L48,78 L24,78Z" />
+</vector>
