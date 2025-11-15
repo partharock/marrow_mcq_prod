@@ -70,3 +70,17 @@ The project uses the following key dependencies:
 ## Notes
 
 - You can extend it with more features like animations, fetching questions from a network source, and more polished UI elements.
+
+## License
+
+This project is released under a dual-license model.
+
+### Open-Source License
+
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. You can use, distribute, and modify this software under the terms of the GPLv3. A copy of the license is included in the `LICENSE` file.
+
+Under the GPLv3, any derivative work you create must also be licensed under the GPLv3.
+
+### Commercial License
+
+If you wish to use this software in a proprietary, closed-source application, you must obtain a commercial license. Please contact us for more information on obtaining a commercial license.
