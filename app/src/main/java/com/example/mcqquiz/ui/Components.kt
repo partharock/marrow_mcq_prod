@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -52,6 +53,11 @@ fun OptionRow(text: String, isSelected: Boolean, isCorrect: Boolean?, onClick: (
             .padding(horizontal = 16.dp, vertical = 10.dp), // Fine-tuned padding
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimary)
+        Text(
+            text = text, 
+            fontSize = 16.sp, 
+            color = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.clearAndSetSemantics { }
+        )
     }
 }

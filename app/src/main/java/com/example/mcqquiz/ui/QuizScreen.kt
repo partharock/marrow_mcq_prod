@@ -6,7 +6,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,18 +19,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,12 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mcqquiz.QuizUiQuestion
 import com.example.mcqquiz.UiState
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -60,22 +58,22 @@ fun QuizScreen(
     val pagerState = rememberPagerState(pageCount = { state.questions.size })
 
     LaunchedEffect(state.currentIndex) {
-        pagerState.animateScrollToPage(state.currentIndex)
+        if (pagerState.currentPage != state.currentIndex) {
+            pagerState.animateScrollToPage(state.currentIndex)
+        }
     }
 
     LaunchedEffect(pagerState.currentPage) {
-        onPageChanged(pagerState.currentPage)
+        if (state.currentIndex != pagerState.currentPage) {
+            onPageChanged(pagerState.currentPage)
+        }
     }
 
     val infiniteTransition = rememberInfiniteTransition(label = "fire-animation")
     val fireAnimationScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(700),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "fire-scale"
+        initialValue = 1f, targetValue = 1.2f, animationSpec = infiniteRepeatable(
+            animation = tween(700), repeatMode = RepeatMode.Reverse
+        ), label = "fire-scale"
     )
 
     Column(
@@ -85,15 +83,16 @@ fun QuizScreen(
     ) {
 
         Box(modifier = Modifier.fillMaxWidth()) {
-            if (state.endTestButtonVisible) {
-                TextButton(
-                    onClick = onEndTest,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .background(Color.Magenta, shape = MaterialTheme.shapes.small)
-                ) {
-                    Text("End Test", color = Color.Cyan)
-                }
+            Button(
+                onClick = onEndTest,
+                modifier = Modifier.align(Alignment.CenterStart),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Text("End Test")
             }
             Text(
                 text = "Quiz",
@@ -102,7 +101,7 @@ fun QuizScreen(
             )
             IconButton(onClick = onToggleSound, modifier = Modifier.align(Alignment.CenterEnd)) {
                 Icon(
-                    imageVector = if (state.isSoundEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                    imageVector = if (state.isSoundEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                     contentDescription = "Toggle Sound"
                 )
             }
@@ -110,13 +109,12 @@ fun QuizScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Streak indicators
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 2.dp)
                 .clearAndSetSemantics { },
-            horizontalArrangement = Arrangement.SpaceEvenly, // This will evenly space the emojis
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             val fireEmojis = listOf(3, 4, 5, 6)
@@ -168,30 +166,32 @@ fun QuizScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.weight(1f)
+            state = pagerState, modifier = Modifier.weight(1f)
         ) { page ->
-            val quizQuestion = state.questions[page]
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Text(
-                    quizQuestion.question.question,
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
+            val quizQuestion = state.questions.getOrNull(page)
+            if (quizQuestion != null) {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp)
-                )
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        quizQuestion.question.question,
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp)
+                    )
 
-                quizQuestion.question.options.forEachIndexed { idx, opt ->
-                    val isSelected = quizQuestion.selectedIndex == idx
-                    val isCorrect =
-                        if (!quizQuestion.revealed) null else (idx == quizQuestion.question.answerIndex)
-                    OptionRow(text = opt, isSelected = isSelected, isCorrect = isCorrect) {
-                        if (!quizQuestion.revealed) onSelect(idx)
+                    quizQuestion.shuffledOptions.forEachIndexed { idx, opt ->
+                        val isSelected = quizQuestion.selectedIndex == idx
+                        val isCorrect = if (quizQuestion.revealed) idx == quizQuestion.shuffledAnswerIndex else null
+                        OptionRow(text = opt, isSelected = isSelected, isCorrect = isCorrect) {
+                            if (!quizQuestion.revealed) {
+                                onSelect(idx)
+                            }
+                        }
                     }
                 }
             }
@@ -200,12 +200,11 @@ fun QuizScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(
-            onClick = onSkip, modifier = Modifier
-                .fillMaxWidth()
+            onClick = onSkip,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            val buttonText =
-                if (state.questions.getOrNull(state.currentIndex)?.revealed == true) "Next" else "Skip"
-            Icon(Icons.Default.SkipNext, contentDescription = buttonText)
+            val buttonText = if (state.currentIndex == state.questions.size - 1) "End Test" else "Skip"
+            Icon(Icons.Default.SkipNext, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text(buttonText)
         }

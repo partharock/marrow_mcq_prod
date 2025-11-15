@@ -13,4 +13,7 @@ interface QuestionDao {
 
     @Query("SELECT * FROM questions")
     suspend fun getQuestions(): List<Question>
+
+    @Query("DELETE FROM questions")
+    suspend fun clearAll()
 }

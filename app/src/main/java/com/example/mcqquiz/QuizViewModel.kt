@@ -1,7 +1,6 @@
 package com.example.mcqquiz
 
 import android.app.Application
-import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -15,7 +14,9 @@ import kotlinx.coroutines.launch
 data class QuizUiQuestion(
     val question: Question,
     val selectedIndex: Int? = null,
-    val revealed: Boolean = false
+    val revealed: Boolean = false,
+    val shuffledOptions: List<String>,
+    val shuffledAnswerIndex: Int
 )
 
 data class UiState(
@@ -33,7 +34,8 @@ data class UiState(
     val isSoundEnabled: Boolean = true,
     val quizStarted: Boolean = false,
     val showAdvanceTimer: Boolean = false,
-    val endTestButtonVisible: Boolean = false // New state for button visibility
+    val showQuitDialog: Boolean = false,
+    val visitedPages: Set<Int> = emptySet()
 )
 
 class QuizViewModel(application: Application, private val repository: QuizRepository) : ViewModel() {
@@ -41,15 +43,30 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
     val uiState = _uiState.asStateFlow()
 
     private var advanceJob: Job? = null
-    private val soundManager = SoundManager(application)
+    private val soundManager: SoundManager
 
     companion object {
         private const val ADVANCE_DELAY_SECONDS = 2
     }
 
+    init {
+        soundManager = SoundManager(application)
+        viewModelScope.launch {
+            soundManager.loadSounds()
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         soundManager.release()
+    }
+
+    fun onQuitAttempt() {
+        _uiState.value = _uiState.value.copy(showQuitDialog = true)
+    }
+
+    fun dismissQuitDialog() {
+        _uiState.value = _uiState.value.copy(showQuitDialog = false)
     }
 
     fun startQuiz() {
@@ -61,17 +78,15 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
 
     fun onPageChanged(page: Int) {
         advanceJob?.cancel()
-        val currentState = _uiState.value
-        val shouldShow = currentState.endTestButtonVisible || (page == currentState.questions.size - 1 && currentState.questions.isNotEmpty())
-        _uiState.value = currentState.copy(
+        _uiState.value = _uiState.value.copy(
             currentIndex = page,
             showAdvanceTimer = false,
-            endTestButtonVisible = shouldShow
+            visitedPages = _uiState.value.visitedPages + page
         )
     }
 
     fun endTest() {
-        _uiState.value = _uiState.value.copy(showResults = true)
+        calculateAndShowResults()
     }
 
     fun toggleSound() {
@@ -95,19 +110,21 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
     }
 
     private suspend fun loadQuestions() {
-        val questions = repository.getQuestions().map { QuizUiQuestion(it) }
+        val questions = repository.getQuestions().map { question ->
+            val originalAnswer = question.options[question.answerIndex]
+            val shuffled = question.options.shuffled()
+            val newAnswerIndex = shuffled.indexOf(originalAnswer)
+            QuizUiQuestion(
+                question = question,
+                shuffledOptions = shuffled,
+                shuffledAnswerIndex = newAnswerIndex
+            )
+        }
         _uiState.value = _uiState.value.copy(
             loading = false,
             questions = questions,
             totalQuestions = questions.size,
-        )
-    }
-
-    @VisibleForTesting
-    fun setQuestions(questions: List<QuizUiQuestion>) {
-        _uiState.value = _uiState.value.copy(
-            questions = questions,
-            totalQuestions = questions.size
+            visitedPages = setOf(0)
         )
     }
 
@@ -116,14 +133,15 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
         val quizQuestion = s.questions.getOrNull(s.currentIndex) ?: return
         if (quizQuestion.revealed) return
 
-        val correct = (idx == quizQuestion.question.answerIndex)
+        val correct = (idx == quizQuestion.shuffledAnswerIndex)
         var newStreak = s.streak
         var longest = s.longestStreak
-        var correctCount = s.correctAnswers
+
         if (correct) {
-            newStreak += 1
-            correctCount += 1
-            if (newStreak > longest) longest = newStreak
+            newStreak++
+            if (newStreak > longest) {
+                longest = newStreak
+            }
             soundManager.playCorrectSound()
         } else {
             newStreak = 0
@@ -133,32 +151,23 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
         val updatedQuestions = s.questions.toMutableList()
         updatedQuestions[s.currentIndex] = quizQuestion.copy(selectedIndex = idx, revealed = true)
 
+        _uiState.value = s.copy(questions = updatedQuestions, streak = newStreak, longestStreak = longest)
+        
         val allAnswered = updatedQuestions.all { it.revealed }
-
-        _uiState.value = s.copy(
-            questions = updatedQuestions,
-            streak = newStreak,
-            longestStreak = longest,
-            correctAnswers = correctCount,
-            showResults = if (allAnswered) true else s.showResults
-        )
-
-        if (!allAnswered) {
+        if (allAnswered) {
             advanceJob?.cancel()
             advanceJob = getAdvanceJob()
+        } else {
+            val isLastQuestion = s.currentIndex == s.questions.size - 1
+            if (!isLastQuestion) {
+                advanceJob?.cancel()
+                advanceJob = getAdvanceJob()
+            }
         }
     }
 
     fun skip() {
         advanceJob?.cancel()
-        val s = _uiState.value
-        val quizQuestion = s.questions.getOrNull(s.currentIndex) ?: return
-        if (quizQuestion.revealed) {
-            _uiState.value = _uiState.value.copy(showAdvanceTimer = false)
-            advance()
-            return
-        }
-        _uiState.value = s.copy(skippedAnswers = s.skippedAnswers + 1, showAdvanceTimer = false)
         advance()
     }
 
@@ -166,16 +175,35 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
         val s = _uiState.value
         val next = s.currentIndex + 1
         if (next >= s.questions.size) {
-            _uiState.value = s.copy(showResults = true, showAdvanceTimer = false)
+            calculateAndShowResults()
         } else {
-            val shouldShow = s.endTestButtonVisible || (next == s.questions.size - 1)
             _uiState.value = s.copy(
                 currentIndex = next,
                 remainingTime = ADVANCE_DELAY_SECONDS,
                 showAdvanceTimer = false,
-                endTestButtonVisible = shouldShow
+                visitedPages = s.visitedPages + next
             )
         }
+    }
+
+    private fun calculateAndShowResults() {
+        val s = _uiState.value
+        if (s.showResults) return
+
+        var correctCount = 0
+        s.questions.forEach { q ->
+            if (q.revealed && q.selectedIndex == q.shuffledAnswerIndex) {
+                correctCount++
+            }
+        }
+
+        val skippedCount = s.visitedPages.count { s.questions.getOrNull(it)?.revealed?.not() ?: false }
+        
+        _uiState.value = s.copy(
+            showResults = true,
+            correctAnswers = correctCount,
+            skippedAnswers = skippedCount
+        )
     }
 
     fun restart() {

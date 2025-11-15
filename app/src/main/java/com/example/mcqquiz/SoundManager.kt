@@ -2,26 +2,35 @@ package com.example.mcqquiz
 
 import android.content.Context
 import android.media.SoundPool
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class SoundManager(context: Context) {
+class SoundManager(private val context: Context) {
 
-    private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(2).build()
+    private var soundPool: SoundPool? = null
+    private var correctSoundId: Int = 0
+    private var incorrectSoundId: Int = 0
     private var isSoundEnabled = true
+    private var areSoundsLoaded = false
 
-    private val correctSoundId: Int =
-        soundPool.load(context, R.raw.correct_sfx, 1)
-    private val incorrectSoundId: Int =
-        soundPool.load(context, R.raw.incorrect_sfx, 1)
+    suspend fun loadSounds() {
+        withContext(Dispatchers.IO) {
+            soundPool = SoundPool.Builder().setMaxStreams(2).build()
+            correctSoundId = soundPool?.load(context, R.raw.correct_sfx, 1) ?: 0
+            incorrectSoundId = soundPool?.load(context, R.raw.incorrect_sfx, 1) ?: 0
+            areSoundsLoaded = true
+        }
+    }
 
     fun playCorrectSound() {
-        if (isSoundEnabled) {
-            soundPool.play(correctSoundId, 1f, 1f, 1, 0, 1f)
+        if (isSoundEnabled && areSoundsLoaded) {
+            soundPool?.play(correctSoundId, 1f, 1f, 1, 0, 1f)
         }
     }
 
     fun playIncorrectSound() {
-        if (isSoundEnabled) {
-            soundPool.play(incorrectSoundId, 1f, 1f, 1, 0, 1f)
+        if (isSoundEnabled && areSoundsLoaded) {
+            soundPool?.play(incorrectSoundId, 1f, 1f, 1, 0, 1f)
         }
     }
 
@@ -34,6 +43,7 @@ class SoundManager(context: Context) {
     }
 
     fun release() {
-        soundPool.release()
+        soundPool?.release()
+        soundPool = null
     }
 }
