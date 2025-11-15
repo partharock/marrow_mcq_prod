@@ -9,9 +9,9 @@ class SoundManager(context: Context) {
     private var isSoundEnabled = true
 
     private val correctSoundId: Int =
-        soundPool.load(context, R.raw.feedback_correct_right_answer_sba_preview, 1)
+        soundPool.load(context, R.raw.correct_sfx, 1)
     private val incorrectSoundId: Int =
-        soundPool.load(context, R.raw.feedback_incorrect_sba_preview, 1)
+        soundPool.load(context, R.raw.incorrect_sfx, 1)
 
     fun playCorrectSound() {
         if (isSoundEnabled) {
