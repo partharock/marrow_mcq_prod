@@ -16,8 +16,8 @@ class SoundManager(private val context: Context) {
     suspend fun loadSounds() {
         withContext(Dispatchers.IO) {
             soundPool = SoundPool.Builder().setMaxStreams(2).build()
-            correctSoundId = soundPool?.load(context, R.raw.feedback_correct_right_answer_sba_preview, 1) ?: 0
-            incorrectSoundId = soundPool?.load(context, R.raw.feedback_incorrect_sba_preview, 1) ?: 0
+            correctSoundId = soundPool?.load(context, R.raw.correct_sfx, 1) ?: 0
+            incorrectSoundId = soundPool?.load(context, R.raw.incorrect_sfx, 1) ?: 0
             areSoundsLoaded = true
         }
     }
