@@ -67,6 +67,23 @@ The project uses the following key dependencies:
 - **JUnit, Mockito, and Mockito-Kotlin:** For unit testing.
 - **Espresso and Compose UI Test:** For UI testing.
 
+## Continuous Integration & Deployment (CI/CD)
+
+This project is configured with a GitHub Actions workflow located in `.github/workflows/apk-publisher.yml`.
+
+This workflow automatically builds a debug version of the Android application and publishes it as a GitHub Release. This process is triggered on every push to the `main` branch, ensuring that a downloadable debug APK is always available from the latest version of the code.
+
+### How it Works
+
+1.  **Trigger:** The workflow runs automatically on every `push` to the `main` branch. It can also be triggered manually from the Actions tab in the GitHub repository.
+2.  **Build:** It sets up a standard Ubuntu environment with Java 17 and the Android SDK, then builds the debug APK using the `./gradlew assembleDebug` command.
+3.  **Release:** After a successful build, the workflow creates a new GitHub Release. Each release is tagged with a unique identifier based on the workflow run ID (e.g., `apk-12345`).
+4.  **Upload:** The generated `app-debug.apk` is then uploaded as an asset to this new release, making it easy to download and install.
+
+### Where to Find the APKs
+
+You can find all automatically generated debug APKs on the **Releases** page of this GitHub repository.
+
 ## Notes
 
 - You can extend it with more features like animations, fetching questions from a network source, and more polished UI elements.
