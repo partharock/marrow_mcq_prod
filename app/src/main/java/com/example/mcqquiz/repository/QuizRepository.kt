@@ -10,13 +10,13 @@ class QuizRepository(
 ) {
 
     suspend fun getQuestions(): List<Question> {
-        val cachedQuestions = questionDao.getQuestions()
+//        val cachedQuestions = questionDao.getQuestions()
 //        return if (cachedQuestions.isNotEmpty()) {
 //            cachedQuestions
 //        } else {
-            val networkQuestions = quizApiService.getQuestions()
-            questionDao.insertAll(networkQuestions)
-            return networkQuestions
+        val networkQuestions = quizApiService.getQuestions()
+        questionDao.insertAll(networkQuestions)
+        return networkQuestions
 //        }
     }
 
