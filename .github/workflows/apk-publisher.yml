@@ -1,5 +1,8 @@
 name: Build & Publish Debug APK
 
+permissions:
+  contents: write
+
 # Run manually or on push to main
 on:
   workflow_dispatch: {}
