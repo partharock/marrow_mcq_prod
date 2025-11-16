@@ -26,10 +26,7 @@ jobs:
         run: |
           mkdir -p app
           echo "$SIGNING_KEY_BASE64" | base64 --decode > app/release.jks
-          # also write to module-relative path in case build.gradle expects app/app/release.jks
-          mkdir -p app/app
-          cp app/release.jks app/app/release.jks
-          ls -l app/release.jks app/app/release.jks || true
+          ls -l app/release.jks
 
       - name: Verify keystore (debug)
         env:
@@ -48,7 +45,7 @@ jobs:
           KEY_PASS: ${{ secrets.KEY_PASSWORD }}
         run: |
           ./gradlew assembleRelease --no-daemon \
-            -PsigningKeyStorePath=app/app/release.jks \
+            -PsigningKeyStorePath="${{ github.workspace }}/app/release.jks" \
             -PsigningStorePassword="$STORE_PASS" \
             -PsigningKeyAlias="$KEY_ALIAS" \
             -PsigningKeyPassword="$KEY_PASS"
