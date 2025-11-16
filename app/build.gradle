@@ -21,11 +21,11 @@ android {
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
-            } else if (System.getenv("SIGNING_KEY_ALIAS")) {
-                storeFile file(System.getenv("SIGNING_KEY_STORE_PATH"))
-                storePassword System.getenv("SIGNING_STORE_PASSWORD")
-                keyAlias System.getenv("SIGNING_KEY_ALIAS")
-                keyPassword System.getenv("SIGNING_KEY_PASSWORD")
+            } else {
+                storeFile file(project.property('signingKeyStorePath'))
+                storePassword project.property('signingStorePassword')
+                keyAlias project.property('signingKeyAlias')
+                keyPassword project.property('signingKeyPassword')
             }
         }
     }

@@ -31,12 +31,8 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
-        env:
-          SIGNING_KEY_STORE_PATH: "app/release.jks"
-          SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease
+        run: |
+          ./gradlew assembleRelease --no-daemon -PsigningKeyStorePath=app/release.jks -PsigningStorePassword="${{ secrets.KEYSTORE_PASSWORD }}" -PsigningKeyAlias="${{ secrets.KEY_ALIAS }}" -PsigningKeyPassword="${{ secrets.KEY_PASSWORD }}"
 
       - name: Create Release Directory and Move APK
         run: |
