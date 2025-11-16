@@ -32,7 +32,7 @@ jobs:
 
       - name: Build with Gradle
         run: |
-          ./gradlew assembleRelease --no-daemon -P signingKeyStorePath=app/release.jks -PsigningStorePassword="${{ secrets.KEYSTORE_PASSWORD }}" -PsigningKeyAlias="${{ secrets.KEY_ALIAS }}" -PsigningKeyPassword="${{ secrets.KEY_PASSWORD }}"
+          ./gradlew assembleRelease --no-daemon -PsigningKeyStorePath=app/release.jks -PsigningStorePassword="${{ secrets.KEYSTORE_PASSWORD }}" -PsigningKeyAlias="${{ secrets.KEY_ALIAS }}" -PsigningKeyPassword="${{ secrets.KEY_PASSWORD }}"
 
       - name: Create Release Directory and Move APK
         run: |
