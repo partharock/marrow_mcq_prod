@@ -42,6 +42,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Create release (if not exists) and upload APK
+        id: release
         # create a release with tag = run id so it is unique; adjust as you like
         uses: softprops/action-gh-release@v1
         with:
