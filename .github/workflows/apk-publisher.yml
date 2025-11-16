@@ -1,4 +1,3 @@
-
 name: Publish Android App
 
 on:
@@ -25,14 +24,31 @@ jobs:
         env:
           SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
         run: |
-          base64 --decode <<< "$SIGNING_KEY_BASE64" > app/release.jks
+          mkdir -p app
+          echo "$SIGNING_KEY_BASE64" | base64 --decode > app/release.jks
+          ls -l app/release.jks
+
+      - name: Verify keystore (debug)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          # Show keystore details to help debug format/alias problems (doesn't print the password)
+          keytool -list -v -keystore app/release.jks -storepass "$KEYSTORE_PASSWORD" || true
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
+        env:
+          STORE_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
         run: |
-          ./gradlew assembleRelease --no-daemon -PsigningKeyStorePath=release.jks -PsigningStorePassword="${{ secrets.KEYSTORE_PASSWORD }}" -PsigningKeyAlias="${{ secrets.KEY_ALIAS }}" -PsigningKeyPassword="${{ secrets.KEY_PASSWORD }}"
+          ./gradlew assembleRelease --no-daemon \
+            -PsigningKeyStorePath=app/release.jks \
+            -PsigningStorePassword="$STORE_PASS" \
+            -PsigningKeyAlias="$KEY_ALIAS" \
+            -PsigningKeyPassword="$KEY_PASS"
 
       - name: Create Release Directory and Move APK
         run: |
