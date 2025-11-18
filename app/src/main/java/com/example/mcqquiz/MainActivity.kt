@@ -38,7 +38,8 @@ class MainActivity : ComponentActivity() {
 
         val appContainer = (application as QuizApplication).appContainer
         val repository =
-            QuizRepository(appContainer.quizApiService, appContainer.quizDatabase.questionDao())
+            QuizRepository(appContainer.quizApiService, appContainer.quizDatabase.questionDao(),
+                appContainer.quizProgressDatabase.moduleProgressDao())
         val factory = QuizViewModelFactory(application, repository)
 
         val vm: QuizViewModel by viewModels { factory }
@@ -69,34 +70,36 @@ private fun MainContent(state: UiState, vm: QuizViewModel, activity: Activity?) 
                 }
 
                 state.loading -> LoadingPopup()
-                state.showResults -> {
-                    BackHandler { vm.restart() } // Go back to start screen from results
-                    ResultsScreen(
-                        total = state.totalQuestions,
-                        correct = state.correctAnswers,
-                        skipped = state.skippedAnswers,
-                        longestStreak = state.longestStreak,
-                        onRestart = { vm.restart() },
-                        onClose = { vm.initiateAppClose() }
-                    )
-                }
-
                 else -> {
-                    BackHandler { vm.onQuitAttempt() }
+                    BackHandler {
+                        when {
+                            state.showOptions -> activity?.finish()
+                            state.showResults -> vm.startQuiz()
+                            else -> vm.saveProgressAndReturn()
+                        }
+                    }
                     QuizScreen(
-                        state = state,
-                        onSelect = { idx -> vm.selectAnswer(idx) },
-                        onSkip = { vm.skip() },
-                        onToggleSound = { vm.toggleSound() },
+                        viewModel = vm,
+                        uiState = state,
+                        onAnswerSelected = { idx -> vm.selectAnswer(idx) },
+                        onSkipClicked = { vm.skip() },
                         onPageChanged = { page -> vm.onPageChanged(page) },
-                        onEndTest = { vm.endTest() }
+                        onRestart = { vm.restart() },
+                        onQuit = { vm.saveProgressAndReturn() },
+                        onToggleSound = { vm.toggleSound() },
+                        onDismissQuitDialog = { vm.dismissQuitDialog() },
+                        onFinish = { vm.saveProgressAndReturn() },
+                        onClose = { vm.initiateAppClose() }
                     )
                 }
             }
 
             if (state.showQuitDialog) {
                 QuitConfirmationDialog(
-                    onConfirm = { activity?.finish() },
+                    onConfirm = {
+                        vm.dismissQuitDialog()
+                        vm.saveProgressAndReturn()
+                    },
                     onDismiss = { vm.dismissQuitDialog() }
                 )
             }

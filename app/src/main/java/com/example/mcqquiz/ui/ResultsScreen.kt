@@ -121,7 +121,7 @@ fun ResultsScreen(
                         .height(50.dp),
                 ) {
                     Text(
-                        text = "Restart Quiz",
+                        text = "Finish",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                     )

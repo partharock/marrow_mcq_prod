@@ -2,16 +2,22 @@ package com.example.mcqquiz.di
 
 import android.content.Context
 import com.example.mcqquiz.database.QuizDatabase
+import com.example.mcqquiz.database.QuizProgressDatabase
 import com.example.mcqquiz.network.QuizApiService
+import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(private val context: Context) {
 
+    private val gson = GsonBuilder()
+        .setLenient()
+        .create()
+
     private val retrofit by lazy {
         Retrofit.Builder()
             .baseUrl("https://gist.githubusercontent.com/") // Base URL for gists
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
@@ -21,5 +27,9 @@ class AppContainer(private val context: Context) {
 
     val quizDatabase: QuizDatabase by lazy {
         QuizDatabase.getDatabase(context)
+    }
+
+    val quizProgressDatabase : QuizProgressDatabase by lazy {
+        QuizProgressDatabase.getDatabase(context)
     }
 }

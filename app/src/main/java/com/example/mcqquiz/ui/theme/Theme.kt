@@ -40,4 +40,5 @@ fun McqQuizTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composabl
         typography = Typography,
         content = content
     )
+
 }

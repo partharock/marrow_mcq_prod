@@ -1,5 +1,6 @@
 package com.example.mcqquiz.ui
 
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -43,11 +45,64 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mcqquiz.QuizViewModel
 import com.example.mcqquiz.UiState
+
+@Composable
+fun QuizScreen(
+    viewModel: QuizViewModel,
+    uiState: UiState,
+    onAnswerSelected: (Int) -> Unit,
+    onSkipClicked: () -> Unit,
+    onPageChanged: (Int) -> Unit,
+    onRestart: () -> Unit,
+    onQuit: () -> Unit,
+    onToggleSound: () -> Unit,
+    onDismissQuitDialog: () -> Unit,
+    onFinish: () -> Unit,
+    onClose: () -> Unit
+) {
+    when {
+        uiState.loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
+        uiState.showOptions -> {
+            QuizOptionsScreen(viewModel = viewModel)
+        }
+
+        uiState.showResults -> {
+            ResultsScreen(
+                total = uiState.totalQuestions,
+                correct = uiState.correctAnswers,
+                skipped = uiState.skippedAnswers,
+                longestStreak = uiState.longestStreak,
+                onRestart = onRestart, // This is used as the "Finish" button action
+                onClose = onClose
+            )
+        }
+
+        else -> {
+            QuizContent(
+                state = uiState,
+                onSelect = onAnswerSelected,
+                onSkip = onSkipClicked,
+                onToggleSound = onToggleSound,
+                onPageChanged = onPageChanged,
+                onEndTest = onQuit
+            )
+        }
+    }
+
+    // The QuitConfirmationDialog is now handled exclusively in MainActivity,
+    // so it is removed from here to avoid confusion.
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun QuizScreen(
+fun QuizContent(
     state: UiState,
     onSelect: (Int) -> Unit,
     onSkip: () -> Unit,
@@ -55,7 +110,7 @@ fun QuizScreen(
     onPageChanged: (Int) -> Unit,
     onEndTest: () -> Unit
 ) {
-    val pagerState = rememberPagerState(pageCount = { state.questions.size })
+    val pagerState = rememberPagerState(initialPage = state.currentIndex, pageCount = { state.questions.size })
 
     LaunchedEffect(state.currentIndex) {
         if (pagerState.currentPage != state.currentIndex) {
@@ -157,7 +212,7 @@ fun QuizScreen(
             style = MaterialTheme.typography.bodyLarge
         )
         LinearProgressIndicator(
-            progress = { (state.currentIndex + 1) / state.totalQuestions.toFloat() },
+            progress = { if (state.totalQuestions > 0) (state.currentIndex + 1) / state.totalQuestions.toFloat() else 0f },
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.onBackground,
             trackColor = MaterialTheme.colorScheme.primary
@@ -186,7 +241,8 @@ fun QuizScreen(
 
                     quizQuestion.shuffledOptions.forEachIndexed { idx, opt ->
                         val isSelected = quizQuestion.selectedIndex == idx
-                        val isCorrect = if (quizQuestion.revealed) idx == quizQuestion.shuffledAnswerIndex else null
+                        val isCorrect =
+                            if (quizQuestion.revealed) idx == quizQuestion.shuffledAnswerIndex else null
                         OptionRow(text = opt, isSelected = isSelected, isCorrect = isCorrect) {
                             if (!quizQuestion.revealed) {
                                 onSelect(idx)
@@ -201,9 +257,11 @@ fun QuizScreen(
 
         Button(
             onClick = onSkip,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !(state.questions.getOrNull(state.currentIndex)?.revealed ?: true)
         ) {
-            val buttonText = if (state.currentIndex == state.questions.size - 1) "End Test" else "Skip"
+            val buttonText =
+                if (state.currentIndex == state.questions.size - 1) "End Test" else "Skip"
             Icon(Icons.Default.SkipNext, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text(buttonText)

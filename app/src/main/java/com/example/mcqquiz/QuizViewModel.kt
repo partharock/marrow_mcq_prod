@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.mcqquiz.repository.QuizRepository
+import com.example.mcqquiz.ui.Module
+import com.example.mcqquiz.ui.ModuleProgress
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +25,7 @@ data class UiState(
     val loading: Boolean = false,
     val questions: List<QuizUiQuestion> = emptyList(),
     val currentIndex: Int = 0,
+    val currentModuleId: String = "",
     val correctAnswers: Int = 0,
     val skippedAnswers: Int = 0,
     val streak: Int = 0,
@@ -33,14 +36,19 @@ data class UiState(
     val isClosing: Boolean = false,
     val isSoundEnabled: Boolean = true,
     val quizStarted: Boolean = false,
+    val showOptions: Boolean = false,
     val showAdvanceTimer: Boolean = false,
     val showQuitDialog: Boolean = false,
     val visitedPages: Set<Int> = emptySet()
 )
 
-class QuizViewModel(application: Application, private val repository: QuizRepository) : ViewModel() {
+class QuizViewModel(application: Application, private val repository: QuizRepository) :
+    ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState = _uiState.asStateFlow()
+
+    private val _modules = MutableStateFlow<List<Module>>(emptyList())
+    val modules = _modules.asStateFlow()
 
     private var advanceJob: Job? = null
     private val soundManager: SoundManager
@@ -70,9 +78,20 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
     }
 
     fun startQuiz() {
-        _uiState.value = _uiState.value.copy(quizStarted = true, loading = true)
+        _uiState.value = _uiState.value.copy(quizStarted = true, showOptions = true, loading = true)
         viewModelScope.launch {
-            loadQuestions()
+            fetchModules()
+        }
+    }
+
+    fun onOptionSelected(moduleId: String, questionsUrl: String) {
+        _uiState.value = _uiState.value.copy(
+            showOptions = false,
+            loading = true,
+            currentModuleId = moduleId
+        )
+        viewModelScope.launch {
+            loadQuestions(questionsUrl)
         }
     }
 
@@ -86,7 +105,18 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
     }
 
     fun endTest() {
-        calculateAndShowResults()
+        viewModelScope.launch {
+            calculateAndSaveResults(completed = true)
+        }
+
+    }
+
+    fun saveProgressAndReturn() {
+        viewModelScope.launch {
+            calculateAndSaveResults(completed = false)
+            fetchModules()
+            _uiState.value = _uiState.value.copy(showOptions = true, loading = false)
+        }
     }
 
     fun toggleSound() {
@@ -96,6 +126,13 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
 
     fun initiateAppClose() {
         _uiState.value = _uiState.value.copy(isClosing = true)
+    }
+
+    private suspend fun fetchModules() {
+        val quizOptions = repository.getQuizOptions()
+        val progress = repository.getAllProgress().associateBy { it.moduleId }
+        _modules.value = quizOptions.map { Module(it, progress[it.id]) }
+        _uiState.value = _uiState.value.copy(loading = false)
     }
 
     private fun getAdvanceJob(): Job {
@@ -109,8 +146,8 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
         }
     }
 
-    private suspend fun loadQuestions() {
-        val questions = repository.getQuestions().map { question ->
+    private suspend fun loadQuestions(questionsUrl: String) {
+        val questions = repository.getQuestions(questionsUrl).map { question ->
             val originalAnswer = question.options[question.answerIndex]
             val shuffled = question.options.shuffled()
             val newAnswerIndex = shuffled.indexOf(originalAnswer)
@@ -151,8 +188,9 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
         val updatedQuestions = s.questions.toMutableList()
         updatedQuestions[s.currentIndex] = quizQuestion.copy(selectedIndex = idx, revealed = true)
 
-        _uiState.value = s.copy(questions = updatedQuestions, streak = newStreak, longestStreak = longest)
-        
+        _uiState.value =
+            s.copy(questions = updatedQuestions, streak = newStreak, longestStreak = longest)
+
         val allAnswered = updatedQuestions.all { it.revealed }
         if (allAnswered) {
             advanceJob?.cancel()
@@ -175,7 +213,9 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
         val s = _uiState.value
         val next = s.currentIndex + 1
         if (next >= s.questions.size) {
-            calculateAndShowResults()
+            viewModelScope.launch {
+                calculateAndSaveResults(completed = true)
+            }
         } else {
             _uiState.value = s.copy(
                 currentIndex = next,
@@ -186,9 +226,8 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
         }
     }
 
-    private fun calculateAndShowResults() {
+    private suspend fun calculateAndSaveResults(completed: Boolean) {
         val s = _uiState.value
-        if (s.showResults) return
 
         var correctCount = 0
         s.questions.forEach { q ->
@@ -197,21 +236,41 @@ class QuizViewModel(application: Application, private val repository: QuizReposi
             }
         }
 
-        val skippedCount = s.visitedPages.count { s.questions.getOrNull(it)?.revealed?.not() ?: false }
-        
-        _uiState.value = s.copy(
-            showResults = true,
-            correctAnswers = correctCount,
-            skippedAnswers = skippedCount
-        )
+        val skippedCount =
+            s.visitedPages.count { s.questions.getOrNull(it)?.revealed?.not() ?: false }
+
+        val moduleId = s.currentModuleId
+        if (moduleId.isNotEmpty()) {
+            repository.insertProgress(
+                ModuleProgress(
+                    moduleId,
+                    correctCount,
+                    s.totalQuestions,
+                    completed,
+                    s.visitedPages.size
+                )
+            )
+        }
+
+        if (completed) {
+            _uiState.value = s.copy(
+                showResults = true,
+                correctAnswers = correctCount,
+                skippedAnswers = skippedCount
+            )
+        }
     }
 
     fun restart() {
         _uiState.value = UiState(isSoundEnabled = _uiState.value.isSoundEnabled)
+        startQuiz()
     }
 }
 
-class QuizViewModelFactory(private val application: Application, private val repository: QuizRepository) : ViewModelProvider.Factory {
+class QuizViewModelFactory(
+    private val application: Application,
+    private val repository: QuizRepository
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(QuizViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
